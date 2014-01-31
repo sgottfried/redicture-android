@@ -99,7 +99,6 @@ public class ImagesActivity extends Activity {
 
                 String line = null;
                 while ((line = reader.readLine()) != null) {
-                    System.out.println("here 2");
                     sb.append(line + "\n");
                 }
                 result = sb.toString();
