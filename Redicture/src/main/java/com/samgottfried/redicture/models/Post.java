@@ -9,4 +9,9 @@ public class Post {
         this.title = title;
         this.imageHash = imageHash;
     }
+
+    @Override
+    public String toString () {
+        return this.title;
+    }
 }
