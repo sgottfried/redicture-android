@@ -2,6 +2,7 @@ package com.samgottfried.redicture;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.samgottfried.redicture.models.Post;
 
@@ -24,6 +26,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 
 public class ImagesActivity extends Activity {
 
@@ -34,52 +37,14 @@ public class ImagesActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_images);
 
-        if (savedInstanceState == null) {
+       /* if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
-        }
+        }*/
 
         new GetPosts().execute();
     }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.images, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_images, container, false);
-            return rootView;
-        }
-    }
-
 
     class GetPosts extends AsyncTask<Void, Void, JSONObject> {
 
@@ -127,7 +92,10 @@ public class ImagesActivity extends Activity {
 
 
         protected void onPostExecute(JSONObject json) {
+
             JSONArray jArray = null;
+            TextView jsonView = (TextView) findViewById(R.id.json);
+            jsonView.setText(json.toString());
             try {
                 jArray = json.getJSONArray("data");
             } catch (JSONException e) {
@@ -146,4 +114,5 @@ public class ImagesActivity extends Activity {
             }
         }
     }
+
 }
