@@ -1,17 +1,17 @@
 package com.samgottfried.redicture;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -19,6 +19,7 @@ import com.samgottfried.redicture.models.Post;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
@@ -29,7 +30,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
+
 
 public class ImagesActivity extends Activity {
 
@@ -39,34 +40,109 @@ public class ImagesActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_images);
-
-       /* if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
-        }*/
-
         new GetPosts(this).execute();
-
-
-
-        /*
-            String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
-        "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-        "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
-        "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
-        "Android", "iPhone", "WindowsMobile" };
-
-    final ArrayList<String> list = new ArrayList<String>();
-    for (int i = 0; i < values.length; ++i) {
-      list.add(values[i]);
     }
 
-    listview.setAdapter(adapter);
+    class PostsArrayAdapter extends ArrayAdapter<Post> {
 
-         */
+        private final Context context;
+        private final Post[] posts;
 
+        public PostsArrayAdapter(Context context, Post[] posts) {
+            super(context, R.layout.post_list_item, posts);
+            this.context = context;
+            this.posts = posts;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View postView = inflater.inflate(R.layout.post_list_item, parent, false);
+
+            TextView textView = (TextView) postView.findViewById(R.id.title);
+            ImageView imageView = (ImageView) postView.findViewById(R.id.image);
+            new DownloadImage(imageView).execute(posts[position]);
+            textView.setText(posts[position].getTitle());
+
+            return postView;
+        }
+
+        class DownloadImage extends AsyncTask<Post,Void,Void> {
+
+            private ImageView imageView;
+            private Bitmap image;
+
+            public DownloadImage (ImageView imageView) {
+                this.imageView = imageView;
+            }
+
+            @Override
+            protected Void doInBackground(Post... posts) {
+                try
+                {
+                   image = downloadBitmap(posts[0].getThumbnail());
+                }
+                catch(Exception e)
+                {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void result) {
+                super.onPostExecute(result);
+                if(image!=null)
+                {
+                    imageView.setImageBitmap(image);
+                }
+
+            }
+        }
+
+            private Bitmap downloadBitmap(String url) {
+                final DefaultHttpClient client = new DefaultHttpClient();
+                final HttpGet getRequest = new HttpGet(url);
+
+                Bitmap image = null;
+
+                try {
+
+                    HttpResponse response = client.execute(getRequest);
+                    final int statusCode = response.getStatusLine().getStatusCode();
+
+                    if (statusCode != HttpStatus.SC_OK) {
+                        Log.w("Redicture", "Error " + statusCode +
+                                " while retrieving bitmap from " + url);
+                        return null;
+
+                    }
+
+                    final HttpEntity entity = response.getEntity();
+                    if (entity != null) {
+                        InputStream inputStream = null;
+                        try {
+                            inputStream = entity.getContent();
+
+                            image = BitmapFactory.decodeStream(inputStream);
+
+                        } finally {
+                            if (inputStream != null) {
+                                inputStream.close();
+                            }
+                            entity.consumeContent();
+                        }
+                    }
+                } catch (Exception e) {
+                    getRequest.abort();
+                    Log.e("Redicture", "Something went wrong while" +
+                            " retrieving bitmap from " + url + e.toString());
+                }
+
+                return image;
+        }
     }
+
 
     class GetPosts extends AsyncTask<Void, Void, JSONObject> {
 
@@ -131,17 +207,17 @@ public class ImagesActivity extends Activity {
             for(int i=0; i<jArray.length(); i++) {
                 try {
                     JSONObject post = jArray.getJSONObject(i);
-                    posts[i] = new Post(post.getString("title"), post.getString("hash"));
-
-                    final ListView listView = (ListView) findViewById(R.id.postsView);
-
-                    final ArrayAdapter adapter = new ArrayAdapter(context,
-                            R.layout.post_list_item, posts);
-                    listView.setAdapter(adapter);
+                    posts[i] = new Post(post.getString("title"), post.getString("hash"), post.getString("ext"));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
+
+            final ListView listView = (ListView) findViewById(R.id.postsView);
+
+            final ArrayAdapter adapter = new PostsArrayAdapter(context, posts);
+
+            listView.setAdapter(adapter);
         }
     }
 

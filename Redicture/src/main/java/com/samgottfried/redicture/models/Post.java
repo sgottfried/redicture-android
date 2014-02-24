@@ -2,16 +2,25 @@ package com.samgottfried.redicture.models;
 
 public class Post {
 
-    public String title;
-    public String imageHash;
+    private final String title;
+    private final String imageHash;
+    private final String extension;
 
-    public Post(String title, String imageHash) {
+    public Post(String title, String imageHash, String extension) {
         this.title = title;
         this.imageHash = imageHash;
+        this.extension = extension;
     }
 
-    @Override
-    public String toString () {
-        return this.title;
+    public String getTitle(){
+        return title;
+    }
+
+    public String getImageHash() {
+        return imageHash;
+    }
+
+    public String getThumbnail() {
+        return "http://i.imgur.com/" + imageHash + "b" + extension;
     }
 }
